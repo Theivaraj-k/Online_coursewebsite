@@ -1,0 +1,469 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ content.title }} - {{ course.title }} - LearnOnline{% endblock %}
+
+{% block extra_css %}
+<style>
+    .learning-container {
+        height: calc(100vh - 72px);
+    }
+    .content-sidebar {
+        height: 100%;
+        overflow-y: auto;
+    }
+    .content-main {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .content-view {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+    }
+    .module-header {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+    .content-item {
+        padding: 0.75rem 1rem;
+        margin-left: 1.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    .content-item:hover {
+        background-color: #f1f1f1;
+    }
+    .content-item.active {
+        background-color: #e9ecef;
+        font-weight: 500;
+    }
+    .progress-indicator {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+        max-width: 100%;
+    }
+    .video-container iframe,
+    .video-container video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="learning-container">
+    <div class="row g-0 h-100">
+        <!-- Content Sidebar -->
+        <div class="col-md-3 border-end content-sidebar bg-white">
+            <div class="p-3">
+                <h4 class="mb-3">{{ course.title }}</h4>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ overall_progress }}%;" aria-valuenow="{{ overall_progress }}" aria-valuemin="0" aria-valuemax="100">{{ overall_progress }}%</div>
+                </div>
+                <p class="small text-muted mb-4">Your progress: {{ overall_progress }}% complete</p>
+                
+                <div class="course-content mt-2">
+                    {% for module in modules %}
+                        <div class="module">
+                            <div class="module-header">
+                                {{ module.title }}
+                            </div>
+                            {% for content_progress in progress_data|get_item:module.id %}
+                                {% with content=content_progress.content completed=content_progress.completed %}
+                                <div class="content-item {% if content.id == current_content.id %}active{% endif %}" onclick="location.href='{% url 'content_detail' course_slug=course.slug content_id=content.id %}'">
+                                    <div class="progress-indicator">
+                                        {% if completed %}
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        {% else %}
+                                            <i class="far fa-circle text-muted"></i>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if content.content_type == 'video' %}
+                                        <i class="fas fa-play-circle me-2 text-danger"></i>
+                                    {% elif content.content_type == 'pdf' %}
+                                        <i class="fas fa-file-pdf me-2 text-primary"></i>
+                                    {% else %}
+                                        <i class="fas fa-file-alt me-2 text-secondary"></i>
+                                    {% endif %}
+                                    
+                                    {{ content.title }}
+                                </div>
+                                {% endwith %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content View -->
+        <div class="col-md-9 content-main bg-light">
+            <div class="content-view">
+                <div class="bg-white shadow-sm rounded p-4 mb-4">
+                    <h2>{{ content.title }}</h2>
+                    <p class="text-muted">{{ module.title }}</p>
+                </div>
+                
+                <div class="bg-white shadow-sm rounded p-4 mb-4">
+                    {% if content.content_type == 'video' %}
+                        {% if content.video_url %}
+                            <div class="video-container mb-4">
+                                <iframe src="{{ content.video_url }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        {% elif content.video_file %}
+                            <div class="video-container mb-4">
+                                <video controls>
+                                    <source src="{{ content.video_file.url }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        {% endif %}
+                    {% elif content.content_type == 'pdf' %}
+                        <div class="text-center mb-4">
+                            <a href="{{ content.pdf_file.url }}" target="_blank" class="btn btn-primary">
+                                <i class="fas fa-download me-2"></i> Download PDF
+                            </a>
+                            
+                            <div class="mt-4 mb-3">
+                                <embed src="{{ content.pdf_file.url }}" type="application/pdf" width="100%" height="600px" />
+                            </div>
+                        </div>
+                    {% elif content.content_type == 'text' %}
+                        <div class="content-text">
+                            {{ content.text_content|linebreaks }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="bg-white shadow-sm rounded p-4 mb-4 d-flex justify-content-between">
+                    <div>
+                        {% if prev_content %}
+                            <a href="{% url 'content_detail' course_slug=course.slug content_id=prev_content.id %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-2"></i> Previous
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <button id="mark-complete-btn" class="btn {% if progress.completed %}btn-success{% else %}btn-outline-success{% endif %}">
+                            {% if progress.completed %}
+                                <i class="fas fa-check me-2"></i> Completed
+                            {% else %}
+                                Mark as Complete
+                            {% endif %}
+                        </button>
+                    </div>
+                    
+                    <div>
+                        {% if next_content %}
+                            <a href="{% url 'content_detail' course_slug=course.slug content_id=next_content.id %}" class="btn btn-primary">
+                                Next <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        {% else %}
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#courseCompleteModal">
+                                <i class="fas fa-trophy me-2"></i> Finish Course
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Complete Modal -->
+<div class="modal fade" id="courseCompleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Congratulations!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="py-4">
+                    <i class="fas fa-trophy fa-4x text-warning mb-3"></i>
+                    {% extends 'base.html' %}
+
+{% block title %}{{ content.title }} - {{ course.title }} - LearnOnline{% endblock %}
+
+{% block extra_css %}
+<style>
+    .learning-container {
+        height: calc(100vh - 72px);
+    }
+    .content-sidebar {
+        height: 100%;
+        overflow-y: auto;
+    }
+    .content-main {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .content-view {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+    }
+    .module-header {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+    .content-item {
+        padding: 0.75rem 1rem;
+        margin-left: 1.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    .content-item:hover {
+        background-color: #f1f1f1;
+    }
+    .content-item.active {
+        background-color: #e9ecef;
+        font-weight: 500;
+    }
+    .progress-indicator {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+        max-width: 100%;
+    }
+    .video-container iframe,
+    .video-container video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="learning-container">
+    <div class="row g-0 h-100">
+        <!-- Content Sidebar -->
+        <div class="col-md-3 border-end content-sidebar bg-white">
+            <div class="p-3">
+                <h4 class="mb-3">{{ course.title }}</h4>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ overall_progress }}%;" aria-valuenow="{{ overall_progress }}" aria-valuemin="0" aria-valuemax="100">{{ overall_progress }}%</div>
+                </div>
+                <p class="small text-muted mb-4">Your progress: {{ overall_progress }}% complete</p>
+                
+                <div class="course-content mt-2">
+                    {% for module in modules %}
+                        <div class="module">
+                            <div class="module-header">
+                                {{ module.title }}
+                            </div>
+                            {% for content_progress in progress_data|get_item:module.id %}
+                                {% with content=content_progress.content completed=content_progress.completed %}
+                                <div class="content-item {% if content.id == current_content.id %}active{% endif %}" onclick="location.href='{% url 'content_detail' course_slug=course.slug content_id=content.id %}'">
+                                    <div class="progress-indicator">
+                                        {% if completed %}
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        {% else %}
+                                            <i class="far fa-circle text-muted"></i>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if content.content_type == 'video' %}
+                                        <i class="fas fa-play-circle me-2 text-danger"></i>
+                                    {% elif content.content_type == 'pdf' %}
+                                        <i class="fas fa-file-pdf me-2 text-primary"></i>
+                                    {% else %}
+                                        <i class="fas fa-file-alt me-2 text-secondary"></i>
+                                    {% endif %}
+                                    
+                                    {{ content.title }}
+                                </div>
+                                {% endwith %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content View -->
+        <div class="col-md-9 content-main bg-light">
+            <div class="content-view">
+                <div class="bg-white shadow-sm rounded p-4 mb-4">
+                    <h2>{{ content.title }}</h2>
+                    <p class="text-muted">{{ module.title }}</p>
+                </div>
+                
+                <div class="bg-white shadow-sm rounded p-4 mb-4">
+                    {% if content.content_type == 'video' %}
+                        {% if content.video_url %}
+                            <div class="video-container mb-4">
+                                <iframe src="{{ content.video_url }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        {% elif content.video_file %}
+                            <div class="video-container mb-4">
+                                <video controls>
+                                    <source src="{{ content.video_file.url }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        {% endif %}
+                    {% elif content.content_type == 'pdf' %}
+                        <div class="text-center mb-4">
+                            <a href="{{ content.pdf_file.url }}" target="_blank" class="btn btn-primary">
+                                <i class="fas fa-download me-2"></i> Download PDF
+                            </a>
+                            
+                            <div class="mt-4 mb-3">
+                                <embed src="{{ content.pdf_file.url }}" type="application/pdf" width="100%" height="600px" />
+                            </div>
+                        </div>
+                    {% elif content.content_type == 'text' %}
+                        <div class="content-text">
+                            {{ content.text_content|linebreaks }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="bg-white shadow-sm rounded p-4 mb-4 d-flex justify-content-between">
+                    <div>
+                        {% if prev_content %}
+                            <a href="{% url 'content_detail' course_slug=course.slug content_id=prev_content.id %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-2"></i> Previous
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <button id="mark-complete-btn" class="btn {% if progress.completed %}btn-success{% else %}btn-outline-success{% endif %}">
+                            {% if progress.completed %}
+                                <i class="fas fa-check me-2"></i> Completed
+                            {% else %}
+                                Mark as Complete
+                            {% endif %}
+                        </button>
+                    </div>
+                    
+                    <div>
+                        {% if next_content %}
+                            <a href="{% url 'content_detail' course_slug=course.slug content_id=next_content.id %}" class="btn btn-primary">
+                                Next <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        {% else %}
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#courseCompleteModal">
+                                <i class="fas fa-trophy me-2"></i> Finish Course
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Complete Modal -->
+<div class="modal fade" id="courseCompleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Congratulations!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="py-4">
+                    <i class="fas fa-trophy fa-4x text-warning mb-3"></i>
+                    <h2>You've Completed the Course!</h2>
+                    <p class="mb-4">Congratulations on finishing {{ course.title }}. We hope you enjoyed the course and gained valuable knowledge.</p>
+                    <a href="{% url 'add_review' course_slug=course.slug %}" class="btn btn-primary me-2" data-bs-dismiss="modal">
+                        Write a Review
+                    </a>                    
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{% url 'my_courses' %}" class="btn btn-success">Go to My Courses</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#mark-complete-btn').click(function() {
+            var contentId = {{ content.id }};
+            var completed = !$(this).hasClass('btn-success');
+            
+            $.ajax({
+                url: '{% url "mark_content_complete" content_id=content.id %}',
+                type: 'POST',
+                data: {
+                    completed: completed,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                dataType: 'json',
+                success: function(data) {
+                    if (data.status === 'success') {
+                        if (completed) {
+                            $('#mark-complete-btn').removeClass('btn-outline-success').addClass('btn-success').html('<i class="fas fa-check me-2"></i> Completed');
+                        } else {
+                            $('#mark-complete-btn').removeClass('btn-success').addClass('btn-outline-success').html('Mark as Complete');
+                        }
+                        
+                        // Update overall progress in sidebar
+                        $('.progress-bar').width(data.overall_progress + '%').attr('aria-valuenow', data.overall_progress);
+                        $('.progress-bar').text(data.overall_progress + '%');
+                        $('.small.text-muted').text('Your progress: ' + data.overall_progress + '% complete');
+                        
+                        location.reload(); // Reload page to reflect changes in the sidebar
+                    } else {
+                        alert(data.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX error: " + error);
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

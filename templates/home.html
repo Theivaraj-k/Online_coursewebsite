@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}LearnOnline - Learn From Anywhere{% endblock %}
+
+{% block content %}
+<section class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-3">Learn New Skills Online</h1>
+                <p class="lead mb-4">Access quality courses from expert instructors and enhance your skills at your own pace.</p>
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{% url 'course_list' %}" class="btn btn-light btn-lg px-4">Browse Courses</a>
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg px-4">Sign Up Free</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="/static/img/hero-image.svg" alt="Online Learning" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="featured-courses py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Featured Courses</h2>
+        <div class="row">
+            {% for course in featured_courses|default:'' %}
+                <div class="col-md-4 mb-4">
+                    {% include 'courses/course_card.html' with course=course %}
+                </div>
+            {% empty %}
+                <div class="col-12 text-center">
+                    <p>No featured courses available at the moment.</p>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'course_list' %}" class="btn btn-primary btn-lg">View All Courses</a>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4 mb-md-0">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper mb-3">
+                            <i class="fas fa-search fa-3x text-primary"></i>
+                        </div>
+                        <h4>Find Your Course</h4>
+                        <p class="text-muted">Browse through our catalog of professional courses to find the perfect match for your career goals.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4 mb-md-0">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper mb-3">
+                            <i class="fas fa-credit-card fa-3x text-primary"></i>
+                        </div>
+                        <h4>Purchase & Enroll</h4>
+                        <p class="text-muted">Securely pay for your selected course using our payment gateway and get instant access.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper mb-3">
+                            <i class="fas fa-laptop fa-3x text-primary"></i>
+                        </div>
+                        <h4>Learn & Succeed</h4>
+                        <p class="text-muted">Study at your own pace, complete assignments, and earn your certificate of completion.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="testimonials py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">What Our Students Say</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <div class="text-warning">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="mb-3">"The courses are well-structured and the instructors really know their stuff. I've learned more in a few weeks than I did in months of self-study."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">JS</div>
+                            <div>
+                                <h6 class="mb-0">John Smith</h6>
+                                <small class="text-muted">Web Developer</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <div class="text-warning">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="mb-3">"LearnOnline helped me switch careers. The practical projects and assignments gave me the portfolio I needed to land my first job in the field."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">ED</div>
+                            <div>
+                                <h6 class="mb-0">Emma Davis</h6>
+                                <small class="text-muted">UX Designer</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <div class="text-warning">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                        <p class="mb-3">"The flexibility to learn at my own pace while working full-time was incredibly valuable. The community support from other students was an unexpected bonus."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">RP</div>
+                            <div>
+                                <h6 class="mb-0">Raj Patel</h6>
+                                <small class="text-muted">Data Analyst</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

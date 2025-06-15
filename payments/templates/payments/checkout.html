@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - {{ course.title }} - LearnOnline{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stripe-button {
+        background-color: #6772e5;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .stripe-button:hover {
+        background-color: #5469d4;
+    }
+
+form#couponFormGroup {
+    gap: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <h2 class="mb-4">Checkout - {{ course.title }}</h2>
+                    
+                    <!-- Course Summary -->
+                    <div class="mb-4">
+                        <h4>Course Summary</h4>
+                        <p><strong>Course:</strong> {{ course.title }}</p>
+                        <p><strong>Instructor:</strong> {{ course.instructor.get_full_name|default:course.instructor.username }}</p>
+                    </div>
+                    
+                    <!-- Pricing Details -->
+                    <div class="mb-4">
+                        <h4>Pricing Details</h4>
+                        <p>Original Price: ₹{{ original_amount }}</p>
+                        {% if discount_amount > 0 %}
+                            <p>Discount Applied: ₹{{ discount_amount }}</p>
+                            <p><strong>Total Amount: ₹{{ amount }}</strong></p>
+                        {% else %}
+                            <p><strong>Total Amount: ₹{{ amount }}</strong></p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Coupon Form -->
+                    <div class="d-flex justify-content-between gap-3 align-items-start" id="couponFormGroup">
+                        <div class="form-group w-75">
+                            <label for="couponCodeInput" class="form-label">Apply Coupon</label>
+                            <input type="text" class="form-control" id="couponCodeInput" placeholder="Enter coupon code" {% if applied_coupon %} value="{{ applied_coupon.code }}" disabled {% endif %}>
+                            <button type="button" class="btn btn-primary" id="applyCouponButton">Apply Coupon</button>
+                        </div>
+                        <div>
+                            <small id="couponMessage" class="form-text text-disabled text-center coupon-message">&nbsp;</small>
+                        </div>
+                    </div>
+
+                    <!-- Payment Options -->
+                    <div class="mb-4">
+                        <h4>Payment Options</h4>
+                        <p>Choose your preferred payment method to proceed:</p>
+
+                        <!-- Stripe Payment -->
+                        {% if request.coupon_applied %}
+                        <button class="btn btn-success" id="stripeButton" disabled >Stripe (₹{{ amount }}) &nbsp;</button>
+                        {% else %}
+                        <button class="btn btn-success" id="stripeButton">Stripe (₹{{ amount }}) </button>
+                        {% endif %}
+
+                        <!-- Razorpay Payment -->
+                        {% if request.coupon_applied %}
+                        <button class="btn btn-info" id="razorpayButton" disabled>Razorpay (₹{{ amount }}) &nbsp;</button>
+                        {% else %}
+                        <button class="btn btn-info" id="razorpayButton">Razorpay (₹{{ amount }}) &nbsp;</button>
+                        {% endif %}
+                    </div>
+
+                    <p class="mt-3 text-muted">By enrolling, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+        data-key="{{ stripe_public_key }}"
+        data-description="{{ course.title }}"
+        data-amount="{{ amount|multiply:100|int }}"
+        data-currency="usd"
+        data-locale="auto"></script>
+<!-- Razorpay payment scripts -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var rp_handler
+    rp_options = {
+        "key": "{{ razorpay_key_id }}", // Enter the Key ID generated from the Razorpay Dashboard
+        "amount": "50000", // Amount is in currency subunits. Default currency is INR.
+        "currency": "INR",
+        "name": "LearnOnline",
+        "description":  '{{ course.title }}',
+        "image": "/static/img/hero-image.svg",
+        "order_id": "order_Izo2HhvkMfl8yN", //This is a sample Order ID. Pass the ORDER_ID obtained from Create Order API call.
+        "handler": function (response){
+            alert("PAYMENT ID :: " + response.razorpay_payment_id);
+            alert("ORDER ID :: " + response.razorpay_order_id);
+            alert("SIGNATURE :: " + response.razorpay_signature);
+        },
+        "prefill": {
+            "name":  "{{ request.user.username }}",
+            "email": "{{ request.user.email }}",
+            "contact": ""
+        },
+        "notes": {
+            "address": "LearnOnline Corporate Office"
+        },
+        "theme": {
+            "color": "#3399cc"
+        }
+    };
+    $(document).ready(function() {
+
+        $('#razorpayButton').click(function() {
+            $.ajax({
+                url: '{% url "create_razorpay_order" course_slug=course.slug %}',
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    if (data.error) {
+				        alert('Error: ' + data.error);
+                        return;
+                    }
+       		 rp_options.amount = data.amount;
+                   rp_options.currency = data.currency;
+                   rp_options.name = data.name;
+                   rp_options.email = data.email;
+                   rp_options.order_id = data.id;
+                   rp_options.handler = function (response){
+                          window.location.href = '{% url "payment_success" course_slug=course.slug %}?razorpay_payment_id=' +
+                               response.razorpay_payment_id + '&razorpay_order_id='+ response.razorpay_order_id + '&razorpay_signature='+ response.razorpay_signature ;
+       		 };
+
+       		 rp_handler = new Razorpay(rp_options);
+       		 rp_handler.open();
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX error: " + error);
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+
+        $('#stripeButton').click(function() {
+            $.ajax({
+                url: '{% url "create_stripe_session" course_slug=course.slug %}',
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    stripe = Stripe('{{ stripe_public_key}}')
+
+                    stripe.redirectToCheckout({
+                        sessionId: data.id
+                    }).then(function (result) {});;
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX error: " + error);
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+
+        $('#applyCouponButton').click(function() {
+            var couponCode = $('#couponCodeInput').val();
+            $.ajax({
+                url: '{% url "apply_coupon" course_slug=course.slug %}?coupon=' + couponCode,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    let oldURL = window.location.href;
+
+                    const url = new URL(oldURL);
+                    url.searchParams.set('coupon', couponCode);
+                    history.pushState({}, '', url);
+                     $("#couponMessage").removeClass('text-success text-danger');
+                    setTimeout(function(){
+                      $("#couponMessage").addClass(data.success ? 'text-success' : 'text-danger');
+                      $('#couponMessage').text(data.message);
+                    }, 300 );
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX error: " + error);
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

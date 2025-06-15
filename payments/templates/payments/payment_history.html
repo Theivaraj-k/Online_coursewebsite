@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment History - LearnOnline{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">Payment History</h2>
+    
+    {% if payments %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Course</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Gateway</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.payment_id }}</td>
+                            <td>{{ payment.course.title }}</td>
+                            <td>₹{{ payment.amount }}</td>
+                            <td>{{ payment.get_status_display }}</td>
+                            <td>{{ payment.get_gateway_display }}</td>
+                            <td>{{ payment.created_at|date:"F j, Y, g:i a" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No payment history available.</p>
+    {% endif %}
+</div>
+{% endblock %}
