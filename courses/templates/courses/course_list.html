@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load course_tags %}
 
 {% block title %}All Courses - LearnOnline{% endblock %}
 
@@ -51,10 +52,16 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="mb-0">
                     {% if category_slug %}
-    {{ categories|filter:category_slug|first|default:"Courses" }}
-{% else %}
-    All Courses
-{% endif %}
+                        {% with filtered_categories=categories|filter_by_slug:category_slug %}
+                            {% if filtered_categories %}
+                                {{ filtered_categories.0.name }}
+                            {% else %}
+                                Courses
+                            {% endif %}
+                        {% endwith %}
+                    {% else %}
+                        All Courses
+                    {% endif %}
 
                     
                     {% if search_query %}
@@ -145,4 +152,4 @@
         });
     });
 </script>
-{% endblock %}
+{% endblock %} 
