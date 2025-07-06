@@ -1,12 +1,169 @@
 {% extends 'base.html' %}
 
+
 {% block title %}LearnOnline - Learn From Anywhere{% endblock %}
 
 {% block content %}
+<style>
+/* 3D Effects CSS */
+.hero-section {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.hero-content {
+    transform: translateZ(20px);
+    transition: transform 0.3s ease;
+}
+
+.hero-content:hover {
+    transform: translateZ(30px) scale(1.02);
+}
+
+.card {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-10px) rotateX(5deg);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.icon-wrapper {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+}
+
+.card:hover .icon-wrapper {
+    transform: translateZ(20px) rotateY(15deg);
+}
+
+.btn {
+    transform-style: preserve-3d;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-3px) translateZ(10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.testimonials .card {
+    perspective: 1000px;
+}
+
+.testimonials .card:hover {
+    transform: translateY(-8px) rotateX(3deg) rotateY(2deg);
+}
+
+.avatar {
+    transition: transform 0.3s ease;
+}
+
+.card:hover .avatar {
+    transform: translateZ(15px) scale(1.1);
+}
+
+.featured-courses .card {
+    transform-origin: center bottom;
+}
+
+.featured-courses .card:hover {
+    transform: translateY(-12px) rotateX(8deg) scale(1.03);
+}
+
+/* Subtle parallax effect for sections */
+.how-it-works {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transform-style: preserve-3d;
+}
+
+.testimonials {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    transform-style: preserve-3d;
+}
+
+/* 3D depth for text elements */
+.display-4 {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    transform: translateZ(10px);
+}
+
+.lead {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    transform: translateZ(5px);
+}
+
+/* Enhanced star ratings with 3D effect */
+.text-warning i {
+    transition: transform 0.2s ease;
+}
+
+.card:hover .text-warning i {
+    transform: translateZ(5px) scale(1.1);
+}
+
+.text-warning i:hover {
+    transform: translateZ(10px) scale(1.2) rotateY(180deg);
+}
+
+/* Section headers with 3D depth */
+h2 {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+    transform: translateZ(5px);
+    transition: transform 0.3s ease;
+}
+
+h2:hover {
+    transform: translateZ(15px) scale(1.05);
+}
+
+/* 3D effect for course cards container */
+.featured-courses .row {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+}
+
+.how-it-works .row {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+}
+
+.testimonials .row {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+}
+
+/* Enhanced button effects */
+.btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+}
+
+.btn-light {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: none;
+}
+
+.btn-outline-light {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+</style>
+
 <section class="hero-section bg-primary text-white py-5">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-6">
+            <div class="col-lg-6 hero-content">
                 <h1 class="display-4 fw-bold mb-3">Learn New Skills Online</h1>
                 <p class="lead mb-4">Access quality courses from expert instructors and enhance your skills at your own pace.</p>
                 <div class="d-grid gap-2 d-md-flex">
@@ -16,8 +173,7 @@
                     {% endif %}
                 </div>
             </div>
-            <div class="col-lg-6 d-none d-lg-block">
-                <img src="/static/img/hero-image.svg" alt="Online Learning" class="img-fluid">
+            <div class="col-lg-6 d-none d-lg-block">  
             </div>
         </div>
     </div>

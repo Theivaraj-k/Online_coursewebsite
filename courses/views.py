@@ -40,37 +40,6 @@ class CourseListView(ListView):
         context['search_query'] = self.request.GET.get('search', '')
         return context
 
-# Course Detail View
-class CourseDetailView(DetailView):
-    model = Course
-    template_name = 'courses/course_detail.html'
-    context_object_name = 'course'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        course = self.get_object()
-        
-        # Check if user is enrolled
-        if self.request.user.is_authenticated:
-            context['is_enrolled'] = Enrollment.objects.filter(
-                user=self.request.user, course=course, is_paid=True
-            ).exists()
-        else:
-            context['is_enrolled'] = False
-        
-        # Get course modules and preview content
-        context['modules'] = course.get_modules()
-        preview_content = []
-        for module in context['modules']:
-            for content in module.content_items.filter(is_preview=True):
-                preview_content.append(content)
-        
-        context['preview_content'] = preview_content
-        context['reviews'] = course.reviews.all()
-        context['avg_rating'] = course.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
-        context['review_form'] = ReviewForm()
-        
-        return context
 
 # Course & Module Management (Instructor only)
 
@@ -466,3 +435,27 @@ def add_review(request, course_slug):
             return redirect('course_detail', slug=course_slug)
     
     return redirect('course_detail', slug=course_slug)
+
+
+from django.views.generic import DetailView
+
+class CourseDetailView(DetailView):
+    model = Course
+    template_name = 'courses/course_detail.html'
+    context_object_name = 'course'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        course = self.get_object()
+
+        # Get all modules for the course
+        modules = course.modules.all()
+
+        # Collect all content items (PDFs) from those modules
+        pdf_count = 0
+        for module in modules:
+            pdf_count += module.content_items.filter(content_type='pdf').count()
+
+        context['pdf_count'] = pdf_count
+        return context
+    
