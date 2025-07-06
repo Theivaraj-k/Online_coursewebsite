@@ -1,4 +1,4 @@
-<div class="card h-100 shadow-sm">
+<div class="card h-100 shadow-sm" style="transition: transform 0.3s; transform-style: preserve-3d;" onmouseover="this.style.transform='rotateY(5deg) rotateX(5deg) translateZ(20px)'" onmouseout="this.style.transform='rotateY(0deg) rotateX(0deg) translateZ(0px)'">
     {% if course.thumbnail %}
         <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}" style="height: 180px; object-fit: cover;">
     {% else %}

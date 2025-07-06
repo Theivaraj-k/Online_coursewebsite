@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+ {% extends 'base.html' %}
 {% load static %}
 
 
@@ -21,6 +21,15 @@
 
 form#couponFormGroup {
     gap: 10px;
+}
+
+.card {
+    transition: transform 0.3s ease-in-out;
+}
+
+.card:hover {
+    transform: perspective(1000px) translateZ(20px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 </style>
 {% endblock %}
